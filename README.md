@@ -18,10 +18,26 @@
 </span>
 <br/>
 
+<br/>
 
-#### Small side-project using SukiUI : [LlamaChat](https://github.com/kikipoulet/LlamaChat)
+### ✨ Upcoming : Use [Dock](https://github.com/wieslawsoltes/Dock) library with SukiUI !
 
 <br/>
+
+![image](https://github.com/kikipoulet/SukiUI/assets/19242427/0b4af54b-9903-4df5-9ca1-6577c878d477)
+
+Credits to @wieslawsoltes for the Dock library.
+
+<br/>
+
+## 📄 Documentation
+
+[Wiki](https://github.com/kikipoulet/SukiUI/wiki)
+
+[SukiUI Documentation](https://kikipoulet.github.io/SukiUI/) *Work in Progress* 🚀
+<br/><br/>
+
+
 
 ## 📱 UI Theme 
 
