@@ -1,0 +1,58 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:animations="clr-namespace:SukiUI.ControlsAnimation"
+                    xmlns:theme="clr-namespace:SukiUI.Theme">
+    <ControlTheme x:Key="SukiContextMenuStyle" TargetType="ContextMenu">
+        <!--  Same motion as the ComboBox drop-down, ContextMenu flavor: Avalonia owns
+              this popup (light-dismiss), so the behavior holds it open through the
+              collapse by cancelling ContextMenu.Closing.  -->
+        <Setter Property="animations:SukiContextMenuMotion.Enable" Value="True" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+        <Setter Property="Background" Value="{DynamicResource SukiCardBackground}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SukiMenuBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--  Tiny margin helps prevent mouse-over immediately  -->
+                <Border Name="PART_LayoutTransform"
+                        Margin="1,0,0,0"
+                        RenderTransformOrigin="0,0">
+                    <Panel>
+                        <Border Margin="16"
+                                BoxShadow="{DynamicResource SukiPopupShadow}"
+                                CornerRadius="{TemplateBinding CornerRadius}" />
+                        <Border Margin="15"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                ClipToBounds="True"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+                            <Panel Background="{DynamicResource PopupGradientBrush}">
+                                <ScrollViewer theme:MenuPopupSizing.ConstrainToScreen="True"
+                                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                                              Theme="{StaticResource SukiMenuScrollViewer}"
+                                              VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                                    <ItemsPresenter Name="PART_ItemsPresenter"
+                                                    Grid.IsSharedSizeScope="True"
+                                                    HorizontalAlignment="Left"
+                                                    ItemsPanel="{TemplateBinding ItemsPanel}"
+                                                    KeyboardNavigation.TabNavigation="Continue" />
+                                </ScrollViewer>
+                            </Panel>
+                        </Border>
+                    </Panel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <!--
+            Open/close animations live in SukiContextMenuMotion (springs, velocity-driven
+            motion blur, staggered item cascade). Avalonia owns this popup's IsOpen
+            (code-built, light-dismiss), so selector keyframes cannot cover the close —
+            the behavior holds the popup open by cancelling ContextMenu.Closing instead.
+        -->
+    </ControlTheme>
+    <ControlTheme x:Key="{x:Type ContextMenu}"
+                  BasedOn="{StaticResource SukiContextMenuStyle}"
+                  TargetType="ContextMenu" />
+</ResourceDictionary>

@@ -1,22 +1,39 @@
 using Avalonia.Media;
 using Material.Icons;
 using SukiUI.Content;
+using SukiUI.Demo.Services;
+using SukiUI.Toasts;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace SukiUI.Demo.Features.ControlsLibrary;
 
-public class IconsViewModel : DemoPageBase
+public partial class IconsViewModel : DemoPageBase
 {
-    public Dictionary<string, StreamGeometry> AllIcons { get; }
+    public IEnumerable<IconItemViewModel> Icons { get; }
 
-    public IconsViewModel() : base("Icons", MaterialIconKind.AlphaICircleOutline, int.MaxValue)
+    public IconsViewModel(ClipboardService clipboardService, ISukiToastManager toastManager) : base("Icons", MaterialIconKind.AlphaICircleOutline, int.MaxValue)
     {
-        AllIcons = typeof(Icons)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(x => x.FieldType == typeof(StreamGeometry))
-            .OrderBy(x => x.Name)
-            .ToDictionary(x => x.Name, y => (StreamGeometry)y.GetValue(null)!);
+        var fields = typeof(Icons).GetFields(BindingFlags.Public | BindingFlags.Static);
+
+        var icons = new List<IconItemViewModel>(fields.Length);
+
+        foreach (var field in fields)
+        {
+            if (field.GetValue(null) is not Geometry geometry)
+            {
+                continue;
+            }
+
+            var icon = new IconItemViewModel(clipboardService, toastManager)
+            {
+                Name = field.Name,
+                Geometry = geometry
+            };
+
+            icons.Add(icon);
+        }
+
+        Icons = icons;
     }
 }

@@ -1,0 +1,220 @@
+name: Nightly Release
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at midnight UTC every day
+  workflow_dispatch: # Allow manual triggering
+    inputs:
+      force:
+        description: 'Publish even when nothing changed since the last successful run'
+        type: boolean
+        default: false
+      dry-run:
+        description: 'Build and pack, but do not push to NuGet'
+        type: boolean
+        default: false
+
+concurrency:
+  group: nightly-release-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a run that may already be pushing packages
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  DOTNET_VERSION: 10.0.x
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  NUGET_OUTPUT: ${{ github.workspace }}/nupkgs
+  PROJECTS: SukiUI/SukiUI.csproj SukiUI.ColorPicker/SukiUI.ColorPicker.csproj SukiUI.ConditionalXAML/SukiUI.ConditionalXAML.csproj SukiUI.Dock/SukiUI.Dock.csproj SukiUI.Motion/SukiUI.Motion.csproj SukiUI.DataGrid/SukiUI.DataGrid.csproj
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      has-changes: ${{ steps.check.outputs.has-changes }}
+      base-version: ${{ steps.get-version.outputs.base-version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history and tags for version checking
+          filter: blob:none # History and tags only, no file blobs
+
+      - name: Get last release version
+        id: get-version
+        run: |
+          set -euo pipefail
+
+          # Highest semantic version tag, not merely the closest one to HEAD.
+          LAST_TAG=$(git tag --list --sort=-v:refname \
+            | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' \
+            | head -n 1 || true)
+          BASE_VERSION="${LAST_TAG#v}"
+          BASE_VERSION="${BASE_VERSION:-0.0.0}"
+
+          echo "base-version=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Using base version: ${BASE_VERSION}"
+
+      - name: Check for changes since last successful nightly release
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+
+          if [ "$FORCE" = "true" ]; then
+            echo "Forced run requested, proceeding with build"
+            echo "has-changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Compare the current commit to the latest successful nightly run on this branch.
+          LAST_SUCCESSFUL_SHA=$(gh run list \
+            --workflow "$GITHUB_WORKFLOW" \
+            --branch "$GITHUB_REF_NAME" \
+            --status success \
+            --limit 1 \
+            --json headSha \
+            --jq '.[0].headSha' 2>/dev/null || true)
+
+          if [ -z "$LAST_SUCCESSFUL_SHA" ]; then
+            echo "No previous successful releases found, proceeding with build"
+            echo "has-changes=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CURRENT_SHA=$(git rev-parse HEAD)
+          if [ "$CURRENT_SHA" = "$LAST_SUCCESSFUL_SHA" ]; then
+            echo "No changes since last successful release at $LAST_SUCCESSFUL_SHA"
+            echo "has-changes=false" >> "$GITHUB_OUTPUT"
+            echo "Nightly skipped: no changes since \`$LAST_SUCCESSFUL_SHA\`." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Changes detected since last successful release at $LAST_SUCCESSFUL_SHA"
+            echo "has-changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: check-changes
+    if: needs.check-changes.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Generate nightly version
+        id: version
+        env:
+          BASE_VERSION: ${{ needs.check-changes.outputs.base-version }}
+        run: |
+          set -euo pipefail
+
+          # Remove build metadata if present
+          CLEAN_VERSION=${BASE_VERSION%%+*}
+
+          # Split version and increment patch number
+          IFS='.' read -r major minor patch <<< "$CLEAN_VERSION"
+          NEW_VERSION="${major}.${minor}.$((patch + 1))"
+
+          DATE=$(date -u +'%Y%m%d')
+          SHORT_SHA=$(git rev-parse --short=7 HEAD)
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER:-0}"
+          NIGHTLY_VERSION="${NEW_VERSION}-nightly${DATE}.${BUILD_NUMBER}"
+
+          echo "NIGHTLY_VERSION=${NIGHTLY_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "SHORT_SHA=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Using version: ${NIGHTLY_VERSION} (commit ${SHORT_SHA})"
+
+      - name: Restore
+        run: |
+          set -euo pipefail
+          for project in $PROJECTS; do
+            dotnet restore "$project"
+          done
+
+      - name: Test ConditionalXAML
+        run: dotnet test SukiUI.ConditionalXAML.Tests -c Release -p:GeneratePackageOnBuild=false
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          for project in $PROJECTS; do
+            dotnet build "$project" -c Release --no-restore \
+              -p:Version="$NIGHTLY_VERSION" \
+              -p:ContinuousIntegrationBuild=true \
+              -p:GeneratePackageOnBuild=false
+          done
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.NIGHTLY_VERSION }}
+
+      - name: Pack
+        run: |
+          set -euo pipefail
+          for project in $PROJECTS; do
+            dotnet pack "$project" -c Release --no-build -o "$NUGET_OUTPUT" \
+              -p:Version="$NIGHTLY_VERSION" \
+              -p:ContinuousIntegrationBuild=true \
+              --include-symbols -p:SymbolPackageFormat=snupkg
+          done
+          ls -l "$NUGET_OUTPUT"
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.NIGHTLY_VERSION }}
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-packages-${{ steps.version.outputs.NIGHTLY_VERSION }}
+          path: ${{ env.NUGET_OUTPUT }}/*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to NuGet.org
+        if: ${{ inputs.dry-run != true && env.NUGET_API_KEY != '' }}
+        run: |
+          set -euo pipefail
+          for package in "$NUGET_OUTPUT"/*.nupkg; do
+            dotnet nuget push "$package" \
+              --api-key "$NUGET_API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done
+
+      - name: Summary
+        if: always()
+        env:
+          NIGHTLY_VERSION: ${{ steps.version.outputs.NIGHTLY_VERSION }}
+          SHORT_SHA: ${{ steps.version.outputs.SHORT_SHA }}
+        run: |
+          {
+            echo "### Nightly \`${NIGHTLY_VERSION}\` (commit \`${SHORT_SHA}\`)"
+            if [ "${{ inputs.dry-run }}" = "true" ]; then
+              echo "- Dry run: packages built but not pushed."
+            elif [ -z "$NUGET_API_KEY" ]; then
+              echo "- \`NUGET_API_KEY\` not set: packages built but not pushed."
+            else
+              echo "- Pushed to [NuGet.org](https://www.nuget.org/packages/SukiUI)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

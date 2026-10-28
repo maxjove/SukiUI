@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Title>SukiUI.Dock</Title>
+    <Description>SukiUI docking theme styles and controls integration for Avalonia UI applications using Dock.Avalonia.</Description>
+    <PackageTags>avalonia;avaloniaui;ui;theme;dock;docking;dock-layout;controls;styling;sukiui</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SukiUI\SukiUI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Avalonia.Themes.Fluent" />
+    <PackageReference Include="Dock.Model.Avalonia" />
+  </ItemGroup>
+
+</Project>

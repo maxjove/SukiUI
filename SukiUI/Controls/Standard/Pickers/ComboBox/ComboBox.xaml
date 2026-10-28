@@ -1,0 +1,244 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:animations="clr-namespace:SukiUI.ControlsAnimation"
+                    xmlns:objectModel="clr-namespace:System.Collections.ObjectModel;assembly=netstandard"
+                    xmlns:suki="https://github.com/kikipoulet/SukiUI"
+                    xmlns:system="clr-namespace:System;assembly=netstandard">
+
+    <Design.PreviewWith>
+        <Border Padding="20" Background="Transparent">
+
+            <ComboBox
+                SelectedIndex="0">
+                <ComboBox.Styles>
+                    <Style Selector="ComboBoxItem:selected /template/ PathIcon#CheckSelected">
+                        <Setter Property="IsVisible" Value="False" />
+                    </Style>
+                </ComboBox.Styles>
+                <ComboBox.ItemsSource>
+                    <objectModel:ObservableCollection x:TypeArguments="system:String">
+                        <system:String>test</system:String>
+                        <system:String>test 2</system:String>
+                    </objectModel:ObservableCollection>
+                </ComboBox.ItemsSource>
+                <ComboBox.SelectionBoxItemTemplate>
+                    <DataTemplate>
+                        <Label Content="{Binding}" />
+                    </DataTemplate>
+                </ComboBox.SelectionBoxItemTemplate>
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Background="Transparent" Content="{Binding}" />
+                            <Button Grid.Column="1" Content="X" />
+                        </Grid>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+        </Border>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="{x:Type ComboBox}" TargetType="ComboBox">
+        <Setter Property="BorderThickness" Value="1,1,1,1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SukiControlBorderBrush}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource SmallCornerRadius}" />
+        <Setter Property="Background" Value="{DynamicResource SukiBackground}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="18,6,0,6" />
+        <Setter Property="MinHeight" Value="45" />
+        <Setter Property="MaxDropDownHeight" Value="345" />
+        <Setter Property="Foreground" Value="{DynamicResource SukiText}" />
+        <Setter Property="PlaceholderForeground" Value="{DynamicResource SukiLowText}" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+       
+        <Setter Property="RenderTransformOrigin" Value="50%, 50%" />
+        <Setter Property="animations:SukiPressMotion.Enable" Value="True" />
+        <Setter Property="animations:SukiPressMotion.Preset" Value="ComboBox" />
+
+        <Setter Property="animations:SukiPopupMotion.OpenProperty" Value="{x:Static ComboBox.IsDropDownOpenProperty}" />
+        <Setter Property="animations:SukiPopupMotion.Enable" Value="True" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--  Padding leaves room for the GlassCard shadow; the popup's HorizontalOffset cancels it.  -->
+                <Border Padding="5">
+                    <suki:GlassCard Name="border"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    Classes="Discrete"
+                                    CornerRadius="{TemplateBinding CornerRadius}">
+                        <suki:GlassCard.Transitions>
+                            <Transitions>
+                                <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
+                            </Transitions>
+                        </suki:GlassCard.Transitions>
+                        <!--  Padding insets the content only. The arrow is chrome and stays pinned to the right edge.  -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Name="PlaceholderTextBlock"
+                                       Grid.Column="0"
+                                       Margin="{TemplateBinding Padding}"
+                                       ClipToBounds="True"
+                                       TextTrimming="CharacterEllipsis"
+                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       VerticalAlignment="Center"
+                                       Foreground="{TemplateBinding PlaceholderForeground}"
+                                       Text="{TemplateBinding PlaceholderText}">
+                                <TextBlock.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="SelectionBoxItem"
+                                                 Converter="{x:Static ObjectConverters.IsNull}"
+                                                 RelativeSource="{RelativeSource TemplatedParent}" />
+                                        <Binding Path="IsEditable"
+                                                 Converter="{x:Static BoolConverters.Not}"
+                                                 RelativeSource="{RelativeSource TemplatedParent}" />
+                                    </MultiBinding>
+                                </TextBlock.IsVisible>
+                            </TextBlock>
+                            <ContentControl Name="SelectionBox"
+                                            Grid.Column="0"
+                                            Margin="{TemplateBinding Padding}"
+                                            ClipToBounds="True"
+                                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                            Content="{TemplateBinding SelectionBoxItem}"
+                                            ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            IsVisible="{TemplateBinding IsEditable, Converter={x:Static BoolConverters.Not}}" />
+                            <TextBox Name="PART_EditableTextBox"
+                                     Grid.Column="0"
+                                     MinHeight="0"
+                                     Margin="{TemplateBinding Padding}"
+                                     Padding="0"
+                                     HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                     VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Foreground="{TemplateBinding Foreground}"
+                                     IsVisible="{TemplateBinding IsEditable}"
+                                     PlaceholderText="{TemplateBinding PlaceholderText}"
+                                     Text="{TemplateBinding Text, Mode=TwoWay}" />
+                            <!--
+                                IsHitTestVisible is off and IsChecked is one-way on purpose. ComboBox
+                                itself toggles IsDropDownOpen on pointer release, so a toggle that also
+                                wrote the property gave it two owners and two competing click paths.
+                                This keeps the button purely as the arrow's visual state.
+                            -->
+                            <ToggleButton Name="toggle"
+                                          Grid.Column="1"
+                                          Padding="12,5"
+                                          BorderThickness="0"
+                                          CornerRadius="{DynamicResource SmallCornerRadius}"
+                                          Focusable="False"
+                                          IsHitTestVisible="False"
+                                          IsChecked="{TemplateBinding IsDropDownOpen}">
+                                <!--
+                                    Drawn as a Path rather than a DrawingImage: Drawing objects sit
+                                    outside the logical tree, so DynamicResource has no resource host
+                                    to resolve or re-resolve against when the theme variant changes.
+                                    The 24-unit grid and 2px stroke are the original values; the
+                                    Viewbox reproduces the old 24 -> 12 scale.
+                                -->
+                                <Viewbox Width="12" Height="12">
+                                    <Panel Width="24" Height="24">
+                                        <Path Data="M7,15 L12,20 L17,15 M7,9 L12,4 L17,9"
+                                              Stroke="{DynamicResource SukiLowText}"
+                                              StrokeThickness="2"
+                                              StrokeLineCap="Round"
+                                              StrokeJoin="Round" />
+                                    </Panel>
+                                </Viewbox>
+                            </ToggleButton>
+                            <!--  Dummy required template part: content-less, never renders anything.  -->
+                            <Popup Name="PART_Popup" />
+                            <!--  The real drop-down: IsOpen is owned by SukiPopupMotion only (no
+                                  binding, no light dismiss — outside presses are detected by the
+                                  behavior itself, so the popup is never closed behind its back).  -->
+                            <Popup Name="PART_SukiPopup"
+                                   Grid.Column="0"
+                                   MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+                                   HorizontalOffset="-5"
+                                   PlacementTarget="{TemplateBinding}">
+                                <!--  Plain Border: RenderTransform is render-only (no relayout per
+                                      frame) and safe for direct writes, unlike LayoutTransformControl
+                                      which rebuilds its own RenderTransform on arrange.  -->
+                                <Border Name="PART_LayoutTransform" RenderTransformOrigin="50%, 0%">
+
+                                    <Border Name="B1"
+                                            MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                            Padding="5,10,5,5">
+                                        <Panel>
+                                            <Border Margin="10,-10,0,10"
+                                                    Background="{DynamicResource SukiPopupBackground}"
+                                                    BoxShadow="{DynamicResource SukiSmallPopupShadow}"
+                                                    ClipToBounds="True"
+                                                    CornerRadius="{DynamicResource SmallCornerRadius}">
+                                                <Panel Background="{DynamicResource PopupGradientBrush}">
+                                                    <suki:GlassCard IsAnimated="False"
+                                                                    CornerRadius="{DynamicResource SmallCornerRadius}" />
+                                                    <!--
+                                                        AllowAutoHide is off here on purpose: the drop-down is
+                                                        transient, so the thin collapsed thumb would give no hint
+                                                        that the list continues below the fold.
+                                                    -->
+                                                    <ScrollViewer
+                                                        AllowAutoHide="False"
+                                                        HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+                                                        IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
+                                                        IsScrollChainingEnabled="False"
+                                                        VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+
+                                                        <ItemsPresenter Name="PART_ItemsPresenter"
+                                                                        ItemsPanel="{TemplateBinding ItemsPanel}" />
+                                                    </ScrollViewer>
+                                                </Panel>
+                                            </Border>
+                                        </Panel>
+                                    </Border>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </suki:GlassCard>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+
+        <!--
+            Open/close animations live in SukiPopupMotion (springs, velocity-driven motion
+            blur, staggered item cascade). Selector-triggered keyframe animations cannot
+            survive an IsDropDownOpen flip, so they were removed.
+        -->
+
+        <Style Selector="^[IsEditable=true]">
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="KeyboardNavigation.TabNavigation" Value="Local" />
+        </Style>
+
+        <!--
+            Trimming applies because the selection box is clipped to its grid column:
+            text can never paint over the arrow, and the boundary reads as an ellipsis
+            rather than a glyph sliced in half.
+        -->
+        <Style Selector="^ /template/ ContentControl#SelectionBox TextBlock">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <!--
+            The toggle never paints its own chrome; the GlassCard behind it already draws
+            the background, border and corner radius. Only :checked is needed, since the
+            button is not hit-testable and so can never enter :pointerover.
+        -->
+        <Style Selector="^ /template/ ToggleButton#toggle:checked">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <Style Selector="^:pointerover /template/ suki|GlassCard#border">
+            <Setter Property="BorderBrush" Value="{DynamicResource SukiLightBorderBrush}" />
+        </Style>
+        <Style Selector="^:disabled /template/ suki|GlassCard#border">
+            <Setter Property="Opacity" Value="{DynamicResource ThemeDisabledOpacity}" />
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>

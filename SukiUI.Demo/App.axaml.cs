@@ -1,57 +1,130 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Controls.Templates;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
 using Microsoft.Extensions.DependencyInjection;
+using SukiUI.Controls;
 using SukiUI.Demo.Common;
-using SukiUI.Demo.Features;
+using SukiUI.Demo.Features.ControlsLibrary;
+using SukiUI.Demo.Features.ControlsLibrary.Colors;
+using SukiUI.Demo.Features.ControlsLibrary.Dialogs;
+using SukiUI.Demo.Features.ControlsLibrary.DockControls;
+using SukiUI.Demo.Features.ControlsLibrary.StackPage;
+using SukiUI.Demo.Features.ControlsLibrary.TabControl;
+using SukiUI.Demo.Features.ControlsLibrary.Toasts;
+using SukiUI.Demo.Features.CustomTheme;
+using SukiUI.Demo.Features.Dashboard;
+using SukiUI.Demo.Features.Effects;
+using SukiUI.Demo.Features.Helpers;
+using SukiUI.Demo.Features.Playground;
+using SukiUI.Demo.Features.Splash;
+using SukiUI.Demo.Features.Theming;
 using SukiUI.Demo.Services;
-using System;
-using System.Linq;
+using SukiUI.Dialogs;
+using SukiUI.Enums;
+using SukiUI.Toasts;
 
 namespace SukiUI.Demo;
 
 public class App : Application
 {
-    private IServiceProvider? _provider;
-
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-        _provider = ConfigureServices();
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var viewLocator = _provider?.GetRequiredService<IDataTemplate>();
-            var mainViewModel = _provider?.GetRequiredService<SukiUIDemoViewModel>();
+            var services = new ServiceCollection();
+            services.AddSingleton(desktop);
+            var views = ConfigureViews(services);
+            var provider = ConfigureServices(services);
+            DataTemplates.Add(new ViewLocator(views));
+            desktop.MainWindow = views.CreateView<SukiUIDemoViewModel>(provider) as Window;
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            var p = new Panel();
+            p.Children.Add(new SukiBackground(){Style = SukiBackgroundStyle.Bubble});
+            var dialogManager = new SukiDialogManager();
 
-            desktop.MainWindow = viewLocator?.Build(mainViewModel) as Window;
+            p.Children.Add(new AllControlsView(){DataContext = new AllControlsViewModel(dialogManager)});
+
+            singleView.MainView = new SukiMainHost()
+            {
+                Hosts = [
+                    new SukiDialogHost
+                    {
+                        Manager = dialogManager
+                    }
+                ],
+                Content =  p
+            };
         }
 
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static ServiceProvider ConfigureServices()
+    private static SukiViews ConfigureViews(ServiceCollection services)
     {
-        var viewLocator = Current?.DataTemplates.First(x => x is ViewLocator);
-        var services = new ServiceCollection();
+        return new SukiViews()
 
-        // Services
-        if (viewLocator is not null)
-            services.AddSingleton(viewLocator);
+            // Add main view
+            .AddView<SukiUIDemoView, SukiUIDemoViewModel>(services)
+
+            // Add pages
+            .AddView<SplashView, SplashViewModel>(services)
+            .AddView<ThemingView, ThemingViewModel>(services)
+            .AddView<PlaygroundView, PlaygroundViewModel>(services)
+            .AddView<EffectsView, EffectsViewModel>(services)
+            .AddView<DashboardView, DashboardViewModel>(services)
+            .AddView<ButtonsView, ButtonsViewModel>(services)
+            .AddView<CardsView, CardsViewModel>(services)
+            .AddView<CollectionsView, CollectionsViewModel>(services)
+            .AddView<DataGridView, DataGridViewModel>(services)
+            .AddView<ContextMenusView, ContextMenusViewModel>(services)
+            .AddView<DockView, DockViewModel>(services)
+            .AddView<DockMvvmView, DockMvvmViewModel>(services)
+            .AddView<ExpanderView, ExpanderViewModel>(services)
+            .AddView<IconsView, IconsViewModel>(services)
+            .AddView<InfoBarView, InfoBarViewModel>(services)
+            .AddView<MiscView, MiscViewModel>(services)
+            .AddView<ProgressView, ProgressViewModel>(services)
+            .AddView<PropertyGridView, PropertyGridViewModel>(services)
+            .AddView<TextView, TextViewModel>(services)
+            .AddView<TogglesView, TogglesViewModel>(services)
+            .AddView<ToastsView, ToastsViewModel>(services)
+            .AddView<TabControlView, TabControlViewModel>(services)
+            .AddView<StackPageView, StackPageViewModel>(services)
+            .AddView<DialogsView, DialogsViewModel>(services)
+            .AddView<HelpersView, HelpersViewModel>(services)
+            .AddView<ColorsView, ColorsViewModel>(services)
+            .AddView<AllControlsView, AllControlsViewModel>(services)
+
+            // Add docks view for DockMvvvm
+            .AddView<DocumentText, DocumentTextViewModel>(services)
+            .AddView<ErrorList, ErrorListViewModel>(services)
+            .AddView<OutputView, OutputViewModel>(services)
+            .AddView<PropertiesView, PropertiesViewModel>(services)
+            .AddView<SolutionExplore, SolutionExploreViewModel>(services)
+
+            // Add additional views
+            .AddView<DialogView, DialogViewModel>(services)
+            .AddView<VmDialogView, VmDialogViewModel>(services)
+            .AddView<RecursiveView, RecursiveViewModel>(services)
+            .AddView<CustomThemeDialogView, CustomThemeDialogViewModel>(services);
+    }
+
+    private static ServiceProvider ConfigureServices(ServiceCollection services)
+    {
+        services.AddSingleton<ClipboardService>();
         services.AddSingleton<PageNavigationService>();
-
-        // ViewModels
-        services.AddSingleton<SukiUIDemoViewModel>();
-        var types = AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(s => s.GetTypes())
-            .Where(p => !p.IsAbstract && typeof(DemoPageBase).IsAssignableFrom(p));
-        foreach (var type in types)
-            services.AddSingleton(typeof(DemoPageBase), type);
+        services.AddSingleton<ISukiToastManager, SukiToastManager>();
+        services.AddSingleton<ISukiDialogManager, SukiDialogManager>();
 
         return services.BuildServiceProvider();
     }

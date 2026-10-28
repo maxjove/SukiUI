@@ -1,54 +1,53 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
-		<Nullable>enable</Nullable>
-		<BuiltInComInteropSupport>true</BuiltInComInteropSupport>
-		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-	</PropertyGroup>
 
-	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.1.0-beta2" />
-		<PackageReference Include="Avalonia.AvaloniaEdit" Version="11.0.6" />
-		<PackageReference Include="Avalonia.Desktop" Version="11.1.0-beta2" />
-		<PackageReference Include="Avalonia.Fonts.Inter" Version="11.1.0-beta2" />
-		<!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-		<PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.1.0-beta2" />
-		<PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.0-beta2" />
-		<PackageReference Include="AvaloniaEdit.TextMate" Version="11.0.6" />
-		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-		<PackageReference Include="Material.Icons.Avalonia" Version="2.1.9" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0-preview.3.24172.9" />
-		<PackageReference Include="ShowMeTheXaml.Avalonia" Version="1.5.1" />
-		<PackageReference Include="ShowMeTheXaml.Avalonia.Generator" Version="1.5.1" />
-	</ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <IsPackable>false</IsPackable>
+    <Title>SukiUI Demo</Title>
+    <Description>Interactive demonstration and showcase application for the SukiUI library suite.</Description>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\SukiUI\SukiUI.csproj" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" />
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="AvaloniaUI.DiagnosticsSupport" />
+    <PackageReference Include="Avalonia.LinuxFramebuffer" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="AvaloniaEdit.TextMate" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Dock.Avalonia" />
+    <PackageReference Include="Dock.Model" />
+    <PackageReference Include="Dock.Model.Avalonia" />
+    <PackageReference Include="Dock.Model.Mvvm" />
+    <PackageReference Include="Dock.Serializer.SystemTextJson" />
+    <PackageReference Include="Markdown.Avalonia" />
+    <PackageReference Include="Material.Icons.Avalonia" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="ShowMeTheXaml.Avalonia" />
+    <PackageReference Include="ShowMeTheXaml.Avalonia.Generator" />
+  </ItemGroup>
 
-	<ItemGroup>
-	  <None Remove="Assets\OIG.N5o-removebg-preview.png" />
-	  <AvaloniaResource Include="Assets\OIG.N5o-removebg-preview.png" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SukiUI.ConditionalXAML\SukiUI.ConditionalXAML.csproj" />
+    <ProjectReference Include="..\SukiUI.ColorPicker\SukiUI.ColorPicker.csproj" />
+    <ProjectReference Include="..\SukiUI.DataGrid\SukiUI.DataGrid.csproj" />
+    <ProjectReference Include="..\SukiUI.Dock\SukiUI.Dock.csproj" />
+    <ProjectReference Include="..\SukiUI\SukiUI.csproj" />
+  </ItemGroup>
 
-	<ItemGroup>
-	  <Compile Update="Features\ControlsLibrary\Toasts\ToastsView.axaml.cs">
-	    <DependentUpon>ToastsView.axaml</DependentUpon>
-	    <SubType>Code</SubType>
-	  </Compile>
-	  <Compile Update="Features\ControlsLibrary\Dialogs\DialogsView.axaml.cs">
-	    <DependentUpon>DialogsView.axaml</DependentUpon>
-	    <SubType>Code</SubType>
-	  </Compile>
-	  <Compile Update="Features\ControlsLibrary\Colors\ColorsView.axaml.cs">
-	    <DependentUpon>ColorsView.axaml</DependentUpon>
-	    <SubType>Code</SubType>
-	  </Compile>
-	  <Compile Update="Features\ControlsLibrary\TabControl\TabControlView.axaml.cs">
-	    <DependentUpon>TabControlView.axaml</DependentUpon>
-	    <SubType>Code</SubType>
-	  </Compile>
-	</ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="..\Images\OIG.N5o-removebg-preview.png" Link="Assets\OIG.N5o-removebg-preview.png" />
+    <AvaloniaResource Include="Assets\**\*.png" />
+    <AvaloniaResource Include="Assets\**\*.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="**\*.sksl" />
+  </ItemGroup>
+
 </Project>

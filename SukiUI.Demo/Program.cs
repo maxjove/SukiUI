@@ -1,7 +1,7 @@
 ﻿using Avalonia;
+using Avalonia.Dialogs;
 using ShowMeTheXaml;
 using System;
-using Avalonia.Dialogs;
 
 namespace SukiUI.Demo;
 
@@ -11,8 +11,28 @@ internal static class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args) => BuildAvaloniaApp()
-        .StartWithClassicDesktopLifetime(args);
+    public static int Main(string[] args)
+    {
+        var builder = BuildAvaloniaApp();
+        if (args.Contains("--drm"))
+        {
+            SilenceConsole();
+            return builder.StartLinuxDrm(args: args, card: null, scaling: 1.0);
+        }
+
+        return builder.StartWithClassicDesktopLifetime(args);
+    }
+
+    private static void SilenceConsole()
+    {
+        new Thread(() =>
+            {
+                Console.CursorVisible = false;
+                while (true)
+                    Console.ReadKey(true);
+            })
+            { IsBackground = true }.Start();
+    }
 
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
@@ -20,11 +40,19 @@ internal static class Program
         var app = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace()
-            .UseXamlDisplay();
+            .LogToTrace();
+
+#if DEBUG
+        app = app.WithDeveloperTools();
+#endif
+
+        app = app.UseXamlDisplay();
 
         if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS() || OperatingSystem.IsLinux())
-            app.UseManagedSystemDialogs();
+        {
+            //app.UseManagedSystemDialogs();
+        }
+
         return app;
     }
 }

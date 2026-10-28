@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Title>SukiUI.Motion</Title>
+    <Description>Declarative motion for Avalonia: a fluent API over typed Avalonia events, spring physics, and interruptions that resume from the live pose and velocity.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SukiUI.Motion.Tests" />
+  </ItemGroup>
+  
+</Project>

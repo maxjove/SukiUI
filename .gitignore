@@ -402,3 +402,10 @@ FodyWeavers.xsd
 
 # Obsidian Markdown Editor
 .obsidian/
+
+# Docs generation
+package-lock.json
+
+# AI
+.serena/
+.semgrep/

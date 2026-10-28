@@ -1,68 +1,47 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
-		<IsPackable>true</IsPackable>
-		<Authors></Authors>
-		<Copyright></Copyright>
-		<PackageProjectUrl>https://github.com/kikipoulet/SukiUI</PackageProjectUrl>
-		<PackageDescription></PackageDescription>
-		<Owners></Owners>
-		<PackageTags>avalonia;avaloniaui;ui;theme</PackageTags>
-		<RepositoryUrl>https://github.com/kikipoulet/SukiUI</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-		<IsPackable>true</IsPackable>
-		<RootNamespace>SukiUI</RootNamespace>
-		<Version>5.0.4</Version>
-		<FileVersion>2.0.0</FileVersion>
-		<AssemblyVersion>2.0.0</AssemblyVersion>
-		<LangVersion>10</LangVersion>
-		<UserSecretsId>712f85e4-12d3-41b0-a417-5714a113666f</UserSecretsId>
-		<Description>https://github.com/kikipoulet/SukiUI</Description>
-		<PackageVersion>5.1.2</PackageVersion>
-		<Nullable>enable</Nullable>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<PackageIcon>OIG.N5o-removebg-preview.png</PackageIcon>
-	</PropertyGroup>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UserSecretsId>712f85e4-12d3-41b0-a417-5714a113666f</UserSecretsId>
 
-	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.1.0-beta2" />
-		<PackageReference Include="Avalonia.Skia" Version="11.1.0-beta2" />
-		<PackageReference Include="SkiaSharp" Version="2.88.8" />
-		<PackageReference Include="Avalonia.Controls.DataGrid" Version="11.1.0-beta2" />
-		<PackageReference Include="Avalonia.Themes.Simple" Version="11.1.0-beta2" />
-		<PackageReference Include="ReactiveUI" Version="19.6.12" />
-	</ItemGroup>
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>SukiUI</Title>
+    <Description>A modern, elegant desktop UI theme and controls library for Avalonia UI with rich animations, dynamic themes, customizable backgrounds, and an extensive control toolkit.</Description>
+    <PackageTags>avalonia;avaloniaui;ui;theme;controls;desktop;fluent;modern;styling;animation;sukiui</PackageTags>
+  </PropertyGroup>
 
-	<ItemGroup>
-		<AvaloniaResource Include="**\*.xaml" />
-		<AvaloniaResource Include="Content\Images\icons8-file-explorer-new-48.png" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Skia" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
+  </ItemGroup>
 
-	<ItemGroup>
-		<AvaloniaResource Include="Roboto-Regular.ttf" />
-		<AvaloniaResource Include="Roboto-Medium.ttf" />
-		<AvaloniaResource Include="CustomFont\Quicksand-Bold.ttf" />
-		<AvaloniaResource Include="CustomFont\Quicksand-Light.ttf" />
-		<AvaloniaResource Include="CustomFont\Quicksand-Medium.ttf" />
-		<AvaloniaResource Include="CustomFont\Quicksand-Regular.ttf" />
-		<AvaloniaResource Include="CustomFont\Quicksand-SemiBold.ttf" />
-	</ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SukiUI.Motion\SukiUI.Motion.csproj" />
+  </ItemGroup>
 
-	<ItemGroup>
-	  <None Update="OIG.N5o-removebg-preview.png">
-	    <Pack>True</Pack>
-	    <PackagePath />
-	  </None>
-	</ItemGroup>
+  <ItemGroup>
+    <AvaloniaResource Include="**\*.xaml" />
+    <AvaloniaResource Include="Content\Images\*.png" />
+    <AvaloniaResource Include="Roboto-*.ttf" />
+    <AvaloniaResource Include="CustomFont\*.ttf" />
+  </ItemGroup>
 
-	<ItemGroup>
-	  <UpToDateCheckInput Remove="Controls\TouchInput\TouchKeyboard\TouchKeyboard.axaml" />
-	  <UpToDateCheckInput Remove="Controls\TouchInput\TouchKeyboard\TouchKeyboardPopUp.axaml" />
-	  <UpToDateCheckInput Remove="Controls\TouchInput\TouchNumericPad\NumericPadPopUp.axaml" />
-	  <UpToDateCheckInput Remove="Controls\TouchInput\TouchNumericPad\TouchNumericPad.axaml" />
-	</ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Content\Shaders\**\*.sksl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Controls\Suki\Overlays\Toast\SukiToastHost.cs">
+      <DependentUpon>SukiToastHost.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\Suki\Overlays\Dialog\SukiDialogHost.cs">
+      <DependentUpon>SukiDialogHost.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Controls\Suki\Overlays\Dialog\SukiDialog.cs">
+      <DependentUpon>SukiDialog.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 
 </Project>
